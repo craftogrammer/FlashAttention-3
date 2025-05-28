@@ -43,8 +43,11 @@ jobs:
           git checkout v3.0.0
           pip wheel . --no-deps -w dist/
 
+      - name: List dist contents               # <-- for debugging!
+        run: ls -l flash-attention/dist/
+
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v3
         with:
           name: flash-attn-v3-cp312-cp312-cu128-torch2.8
-          path: flash-attention/dist/*.whl
+          paths: flash-attention/dist/*.whl
