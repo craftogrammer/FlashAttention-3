@@ -1,0 +1,50 @@
+name: Build FlashAttention v3 for CUDA12.8 + PyTorch2.8 + Python3.12
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout FlashAttention
+        uses: actions/checkout@v4
+        with:
+          repository: Dao-AILab/flash-attention
+          path: flash-attention
+
+      - name: Setup CUDA 12.8 Toolkit
+        run: |
+          sudo apt-get update
+          wget https://developer.download.nvidia.com/compute/cuda/12.8.0/local_installers/cuda-repo-ubuntu2204-12-8-local_12.8.0-1_amd64.deb
+          sudo dpkg -i cuda-repo-ubuntu2204-12-8-local_12.8.0-1_amd64.deb
+          sudo apt-key add /var/cuda-repo-ubuntu2204-12-8-local/7fa2af80.pub
+          sudo apt-get update
+          sudo apt-get install -y cuda-toolkit-12-8
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install PyTorch 2.8 + cu128
+        run: |
+          pip install --upgrade pip
+          pip install torch==2.8.0+cu128 torchvision==0.15.0+cu128 --extra-index-url https://download.pytorch.org/whl/cu128
+
+      - name: Install build deps
+        run: |
+          pip install setuptools wheel ninja
+
+      - name: Build flash-attn wheel
+        working-directory: flash-attention
+        run: |
+          git fetch --tags
+          git checkout v3.0.0
+          pip wheel . --no-deps -w dist/
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: flash-attn-v3-cp312-cp312-cu128-torch2.8
+          path: flash-attention/dist/*.whl
